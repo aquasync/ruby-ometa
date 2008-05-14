@@ -1,0 +1,20 @@
+ometa Calc {
+  digit   = char:c ?c =~ /[0-9]/
+	  -> c[0] - ?0
+	,
+  number  = number:n digit:d           -> n * 10 + d
+            | digit,
+  priExpr = number
+            | '(' expr:e ')'           -> e
+	,
+  powExpr = priExpr:x '^' powExpr:y  -> x ** y
+            | priExpr,
+  mulExpr = mulExpr:x '*' powExpr:y  -> x * y
+            | mulExpr:x '/' powExpr:y  -> x / y
+            | powExpr,
+  addExpr = addExpr:x '+' mulExpr:y  -> x + y
+            | addExpr:x '-' mulExpr:y  -> x - y
+            | mulExpr,
+  expr    = addExpr
+}
+

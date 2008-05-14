@@ -1,0 +1,73 @@
+
+ometa OMetaParser <: Parser {
+  nameFirst      = '_' | '$' | letter,
+  nameRest       = nameFirst | digit,
+  tsName         = firstAndRest('"nameFirst"', '"nameRest"'):xs              -> xs.join('')
+	,
+	name           = spaces tsName,
+  eChar          = '\\' char:c                                         ->  eval("\"\\" + c + "\"")
+                 | char,
+  tsString       = '\'' (~'\'' eChar)*:xs '\''                         -> xs.join('')
+	,
+  characters     = '`' '`' (~('\'' '\'') eChar)*:xs '\'' '\''          -> ['App', 'seq',     xs.join('').toProgramString()]
+	,
+  sCharacters    = '"'     (~'"'         eChar)*:xs '"'                -> ['App', 'token',   xs.join('').toProgramString()]
+	,
+  string         = (('#' | '`') tsName | tsString):xs                  -> ['App', 'exactly', xs.toProgramString()]
+	,
+  number         = ('-' | empty -> ''
+	):sign digit+:ds                  -> ['App', 'exactly', sign + ds.join('')]
+	,
+
+  keyword :xs    = token('xs') ~letterOrDigit                            -> xs
+	,
+  hostExpr       = foreign('BSJSParser', '"expr"'):r                           foreign('BSJSTranslator', '"trans"', 'r'),
+  atomicHostExpr = foreign('BSJSParser', '"semAction"'):r                      foreign('BSJSTranslator', '"trans"', 'r'),
+  args           = "(" listOf('hostExpr', '","'):xs ")"                   -> xs
+                 | empty                                               -> []
+	,
+  application    = name:rule args:as                                   -> ['App', rule].concat(as)
+	,
+  semAction      = ("!" | "->") atomicHostExpr:x                       -> ['Act',  x]
+	,
+  semPred        = "?"          atomicHostExpr:x                       -> ['Pred', x]
+	,
+  expr           = listOf('expr4', '"|"'):xs                              -> ['Or'].concat(xs)
+	,
+  expr4          = expr3*:xs                                           -> ['And'].concat(xs)
+	,
+  optIter :x     = "*"                                                 -> ['Many',  x]
+                 | "+"                                                 -> ['Many1', x]
+                 | empty                                               -> x
+	,
+  expr3          = expr2:x optIter('x'):x ( ':' name:n                   -> (@locals << n; ['Set', n, x])
+                                        | empty                        -> x
+                                        )
+                 | ":" name:n                                          -> (@locals << n; ['Set', n, ['App', 'anything']])
+	,
+  expr2          = "~" expr2:x                                         -> ['Not',       x]
+                 | "&" expr1:x                                         -> ['Lookahead', x]
+                 | expr1,
+  expr1          = application | semAction | semPred
+                 | ( keyword('"undefined"') | keyword('"nil"')
+                   | keyword('"true"')      | keyword('"false"') ):x       -> ['App', 'exactly', x]
+                 | spaces (characters | sCharacters | string | number)
+                 | "[" expr:x "]"                                      -> ['Form', x]
+                 | "(" expr:x ")"                                      -> x
+	,
+  ruleName       = name
+                 | spaces tsString,
+  rule           = &(ruleName:n) !(@locals = []
+	)
+                     rulePart('n'):x ("," rulePart('n'))*:xs               -> ['Rule', n, @locals, ['Or', x].concat(xs)]
+	,
+  rulePart :rn   = ruleName:n ?n == rn
+		expr4:b1 ( "=" expr:b2        -> ['And', b1, b2]
+                                                  | empty              -> b1
+                                                  ),
+  grammar        = keyword('"ometa"') name:n
+                     ( "<:" name | empty -> OMeta
+											):sn
+                     "{" listOf('"rule"', '","'):rs "}"                     -> ['Grammar', n, sn].concat(rs)
+}
+

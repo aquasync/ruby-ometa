@@ -1,0 +1,166 @@
+ometa JSParser <: OMeta {
+  fromTo :x :y = seq('x') (~seq('y') char)* seq('y'), 
+  space        = super('"space"') | fromTo('"//"', '"\n"') | fromTo('"/*"', '"*/"'),
+  nameFirst    = letter | '$' | '_',
+  nameRest     = nameFirst | digit,
+  iName        = firstAndRest('"nameFirst"', '"nameRest"'):r            -> r.join('')
+	,
+  isKeyword :x = ?JSParser._isKeyword(x)
+	,
+  name         = iName:n ~isKeyword('n')                                -> ['name', n]
+	,
+  keyword      = iName:k isKeyword('k')                                 -> [k, k]
+	,
+  number       = digit+:ws ('.' digit+ | empty -> []
+	):fs                -> ['number', (ws.join('') + '.' + fs.join('')).to_f]
+	,
+  escapeChar   = '\\'        char:c                                     -> eval("\"\\" + c + "\"")
+	,
+  str          = '\''        (escapeChar | ~'\'' char)*:cs '\''         -> ['string', cs.join('')]
+               | '"'         (escapeChar | ~'"'  char)*:cs '"'          -> ['string', cs.join('')]
+               | ('#' | '`') iName:n                                    -> ['string', n]
+	,
+  special      = ( '('    | ')'     | '{'     | '}'     | '['     | ']'    | ','    | ';'
+                 | '?'    | ':'     | ``!=='' | ``!=''  | ``==='' | ``=='' | ``=''  | ``>=''
+                 | '>'    | ``<=''  | '<'     | ``++''  | ``+=''  | '+'    | ``--'' | ``-=''
+                 | '-'    | ``*=''  | '*'     | ``/=''  | '/'     | ``%='' | '%'    | ``&&=''
+                 | ``&&'' | ``||='' | ``||''  | '.'     | '!'                                ):s -> [s, s]
+	,
+  tok          = spaces (name | keyword | number | str | special),
+  toks         = token*:ts spaces end                                   -> ts
+	,
+  token :tt    = tok:t ?t[0] == tt
+		-> t[1]
+	,
+  spacesNoNl   = (~'\n' space)*,
+  expr         = orExpr:e ( "?"   expr:t   ":" expr:f                   -> ['condExpr', e, t, f]
+                          | "="   expr:rhs                              -> ['set',  e, rhs]
+                          | "+="  expr:rhs                              -> ['mset', e, "+",  rhs]
+                          | "-="  expr:rhs                              -> ['mset', e, "-",  rhs]
+                          | "*="  expr:rhs                              -> ['mset', e, "*",  rhs]
+                          | "/="  expr:rhs                              -> ['mset', e, "/",  rhs]
+                          | "%="  expr:rhs                              -> ['mset', e, "%",  rhs]
+                          | "&&=" expr:rhs                              -> ['mset', e, "&&", rhs]
+                          | "||=" expr:rhs                              -> ['mset', e, "||", rhs]
+                          | empty                                       -> e
+                          ),
+
+  orExpr       = orExpr:x "||" andExpr:y                                -> ['binop', "||", x, y]
+               | andExpr,
+  andExpr      = andExpr:x "&&" eqExpr:y                                -> ['binop', "&&", x, y]
+               | eqExpr,
+  eqExpr       = eqExpr:x ( "=="  relExpr:y                             -> ['binop', "==",  x, y]
+                          | "!="  relExpr:y                             -> ['binop', "!=",  x, y]
+                          | "===" relExpr:y                             -> ['binop', "===", x, y]
+                          | "!==" relExpr:y                             -> ['binop', "!==", x, y]
+                          )
+               | relExpr,
+  relExpr      = relExpr:x ( ">"          addExpr:y                     -> ['binop', ">",          x, y]
+                           | ">="         addExpr:y                     -> ['binop', ">=",         x, y]
+                           | "<"          addExpr:y                     -> ['binop', "<",          x, y]
+                           | "<="         addExpr:y                     -> ['binop', "<=",         x, y]
+                           | "instanceof" addExpr:y                     -> ['binop', "instanceof", x, y]
+                           )
+               | addExpr,
+  addExpr      = addExpr:x "+" mulExpr:y                                -> ['binop', "+",          x, y]
+               | addExpr:x "-" mulExpr:y                                -> ['binop', "-",          x, y]
+               | mulExpr,
+  mulExpr      = mulExpr:x "*" mulExpr:y                                -> ['binop', "*",          x, y]
+               | mulExpr:x "/" mulExpr:y                                -> ['binop', "/",          x, y]
+               | mulExpr:x "%" mulExpr:y                                -> ['binop', "%",          x, y]
+               | unary,
+  unary        = "-"  postfix:p                                         -> ['unop',  "-",   p]
+               | "+"  postfix:p                                         -> p
+               | "++" postfix:p                                         -> ['preop', "++",  p]
+               | "--" postfix:p                                         -> ['preop', "--",  p]
+               | "!"  postfix:p                                         -> ['unop',  "!",   p]
+               | postfix,
+  postfix      = primExpr:p ( spacesNoNl "++"                           -> ['postop', "++", p]
+                            | spacesNoNl "--"                           -> ['postop', "--", p]
+                            | empty                                     -> p
+                            ),
+  primExpr     = primExpr:p ( "[" expr:i "]"                            -> ['getp', i, p]
+                            | "." "name":m "(" listOf('"expr"', '","'):as ")"  -> ['send', m, p].concat(as)
+                            | "." "name":f                                     -> ['getp', ['string', f], p]
+                            | "(" listOf('"expr"', '","'):as ")"               -> ['call', p].concat(as)
+                            )
+               | primExprHd,
+  primExprHd   = "(" expr:e ")"                                         -> e
+               | "this"                                                 -> ['this']
+               | "name":n                                               -> ['get', n]
+               | "number":n                                             -> ['number', n]
+               | "string":s                                             -> ['string', s]
+               | "function" funcRest
+               | "new" "name":n "(" listOf('"expr"', '","'):as ")"           -> ['new', n].concat(as)
+               | "[" listOf('"expr"', '","'):es "]"                          -> ['arr'].concat(es)
+               | json,
+
+	json         = "{" listOf('"jsonBinding"', '","'):bs "}"              -> ['json'].concat(bs)
+	,
+  jsonBinding  = jsonPropName:n ":" expr:v                              -> ['binding', n, v]
+	,
+  jsonPropName = "name" | "number" | "string",
+  formal       = spaces "name",
+  funcRest     = "(" listOf('"formal"', '","'):fs ")" "{" srcElems:body "}"  -> ['func', fs, body]
+	,
+  sc           = spacesNoNl ('\n' | &'}' | end)
+               | ";",
+  binding      = "name":n ( "=" expr
+                          | empty -> ['get', 'undefined']
+													):v            -> ['var', n, v]
+	,
+  block        = "{" srcElems:ss "}"                                    -> ss
+  
+	,
+	stmt         = block
+               | "var" listOf('"binding"', '","'):bs sc                                          -> ['begin'].concat(bs)
+               | "if" "(" expr:c ")" stmt:t ( "else" stmt
+                                            | empty -> ['get', 'undefined']
+																						):f                   -> ['if', c, t, f]
+               | "while" "(" expr:c ")" stmt:s                                                   -> ['while',   c, s]
+               | "do" stmt:s "while" "(" expr:c ")" sc                                           -> ['doWhile', s, c]
+               | "for" "(" ( "var" binding
+                           | expr
+                           | empty -> ['get', 'undefined']
+													 ):i
+                       ";" ( expr
+                           | empty -> ['get', 'true']
+													 ):c
+                       ";" ( expr
+                           | empty -> ['get', 'undefined']
+													 ):u
+                       ")" stmt:s                                                                -> ['for', i, c, u, s]
+               | "for" "(" ( "var" "name":n -> ['var', n, ['get', 'undefined']]
+                           | expr                                             ):v
+                      "in" expr:e
+                       ")" stmt:s                                                                -> ['forIn', v, e, s]
+               | "switch" "(" expr:e ")" "{"
+                   ( "case" expr:c ":" srcElems:cs -> ['case', c, cs]
+                   | "default"     ":" srcElems:cs -> ['default', cs]
+									 )*:cs
+                 "}"                                                                             -> ['switch', e].concat(cs)
+               | "break" sc                                                                      -> ['break']
+               | "continue" sc                                                                   -> ['continue']
+               | "throw" spacesNoNl expr:e sc                                                    -> ['throw', e]
+               | "try" block:t "catch" "(" "name":e ")" block:c
+                             ( "finally" block
+                             | empty -> ['get', 'undefined']
+														 ):f                                  -> ['try', t, e, c, f]
+               | "return" ( expr
+                          | empty -> ['get', 'undefined']
+													):e sc                                  -> ['return', e]
+               | expr:e sc                                                                       -> e
+	,
+  srcElem      = "function" "name":n funcRest:f                                                  -> ['var', n, f]
+               | stmt,
+  srcElems     = srcElem*:ss                                                                     -> ['begin'].concat(ss)
+	,
+
+  topLevel     = srcElems:r                                      spaces end -> r
+	,
+  semAction    = "{" (srcElem:s &srcElem -> s
+		)+:ss expr:r sc "}" spaces     -> ( ss.push(['return', r]); ['call', ['func', [], ['begin'].concat(ss)]] )
+               | "{" primExpr:r "}"                              spaces     -> r
+               | primExpr:r                                      spaces     -> r
+}
+
