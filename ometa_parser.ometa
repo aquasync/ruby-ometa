@@ -21,8 +21,8 @@ ometa OMetaParser <: Parser {
 
   keyword :xs    = token('xs') ~letterOrDigit                            -> xs
 	,
-  hostExpr       = foreign('BSJSParser', '"expr"'):r                           foreign('BSJSTranslator', '"trans"', 'r'),
-  atomicHostExpr = foreign('BSJSParser', '"semAction"'):r                      foreign('BSJSTranslator', '"trans"', 'r'),
+  hostExpr       = foreign('BSRubyParser', '"expr"'):r                           foreign('BSRubyTranslator', '"trans"', 'r'),
+  atomicHostExpr = foreign('BSRubyParser', '"semAction"'):r                      foreign('BSRubyTranslator', '"trans"', 'r'),
   args           = "(" listOf('hostExpr', '","'):xs ")"                   -> xs
                  | empty                                               -> []
 	,
@@ -57,8 +57,7 @@ ometa OMetaParser <: Parser {
 	,
   ruleName       = name
                  | spaces tsString,
-  rule           = &(ruleName:n) !(@locals = []
-	)
+  rule           = &(ruleName:n) !@locals = []
                      rulePart('n'):x ("," rulePart('n'))*:xs               -> ['Rule', n, @locals, ['Or', x].concat(xs)]
 	,
   rulePart :rn   = ruleName:n ?n == rn
