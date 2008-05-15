@@ -1,0 +1,5 @@
+ometa OMetaOptimizer {
+  optimizeGrammar = ['Grammar' :n :sn optimizeRule*:rs]               -> ['Grammar', n, sn].concat(rs)
+	,
+  optimizeRule    = :r (foreign('AndOrOptimization', '"optimize"', 'r'):r)* -> r
+}

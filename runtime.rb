@@ -162,139 +162,139 @@ end
 class OMeta
 	attr_reader :input
 
-  def _apply(rule)
+	def _apply(rule)
 		#p rule
-    memoRec = @input.memo[rule]
-    if not memoRec
-      oldInput = @input
-      lr = LeftRecursion.new
-      @input.memo[rule] = memoRec = lr
+		memoRec = @input.memo[rule]
+		if not memoRec
+			oldInput = @input
+			lr = LeftRecursion.new
+			@input.memo[rule] = memoRec = lr
 			# should these be copies too?
-      @input.memo[rule] = memoRec = {:ans => method(rule).call, :nextInput => @input}
-      if lr.detected
-        sentinel = @input
-        while true
-          begin
-            @input = oldInput
-            ans = method(rule).call
-            if @input == sentinel
-              raise Fail
+			@input.memo[rule] = memoRec = {:ans => method(rule).call, :nextInput => @input}
+			if lr.detected
+				sentinel = @input
+				while true
+					begin
+						@input = oldInput
+						ans = method(rule).call
+						if @input == sentinel
+							raise Fail
 						end
-            oldInput.memo[rule] = memoRec = {:ans => ans, :nextInput => @input}
-          rescue Fail
-            break
+						oldInput.memo[rule] = memoRec = {:ans => ans, :nextInput => @input}
+					rescue Fail
+						break
 					end
 				end
 			end
-    elsif LeftRecursion === memoRec
-      memoRec.detected = true
-      raise Fail
+		elsif LeftRecursion === memoRec
+			memoRec.detected = true
+			raise Fail
 		end
-    @input = memoRec[:nextInput]
-    return memoRec[:ans]
+		@input = memoRec[:nextInput]
+		return memoRec[:ans]
 	end
 
-  def _applyWithArgs(rule, *args)
+	def _applyWithArgs(rule, *args)
 		#p :app_wit_arg => [rule, args]
-    args.reverse_each do |arg|
-      @input = LazyStream.new arg, @input, nil
+		args.reverse_each do |arg|
+			@input = LazyStream.new arg, @input, nil
 		end
-    send rule
+		send rule
 	end
 
-  def _superApplyWithArgs(rule, *args)
-    #for (var idx = arguments.length - 1; idx > 1; idx--)
-    #  $elf.input = makeOMInputStream(arguments[idx], $elf.input, null)
-    #return this[rule].apply($elf)
+	def _superApplyWithArgs(rule, *args)
+		#for (var idx = arguments.length - 1; idx > 1; idx--)
+		#  $elf.input = makeOMInputStream(arguments[idx], $elf.input, null)
+		#return this[rule].apply($elf)
 		# would probably be easier to use realsuper in the caller, rather than do this
 		##classes = self.class.ancestors.select { |a| Class === a }
 		#methods = classes.map { |a| a.instance_method rule rescue nil }.compact
 		#method = methods.first.bind(self)
-    args.reverse_each do |arg|
-      @input = LazyStream.new arg, @input, nil
+		args.reverse_each do |arg|
+			@input = LazyStream.new arg, @input, nil
 		end
 		# we leverage the inbuild ruby super, by means of the block passed to this function
 		# which calls super
 		yield
-    #method.call
+		#method.call
 	end
 
-  def _pred(b)
-    if (b)
-      return true
+	def _pred(b)
+		if (b)
+			return true
 		end
-    raise Fail
+		raise Fail
 	end
 
-  def _not(x)
-    oldInput = @input.copy
-    begin
+	def _not(x)
+		oldInput = @input.copy
+		begin
 			x.call
 		rescue Fail
-      @input = oldInput
-      return true
+			@input = oldInput
+			return true
 		end
-    raise Fail
+		raise Fail
 	end
 
-  def _lookahead(x)
-    oldInput = @input.copy
-    r = x.call
-    @input = oldInput
-    return r
+	def _lookahead(x)
+		oldInput = @input.copy
+		r = x.call
+		@input = oldInput
+		return r
 	end
 
 	def _or(*args)
-    oldInput = @input.copy
-    args.each do |arg|
+		oldInput = @input.copy
+		args.each do |arg|
 			begin
 				@input = oldInput
 				return arg.call
 			rescue Fail
 			end
 		end
-    raise Fail
+		raise Fail
 	end
 
-  def _many(x, *ans)
-    while true
-      oldInput = @input.copy
-      begin
+	def _many(x, *ans)
+		while true
+			oldInput = @input.copy
+			begin
 				ans << x.call
 			rescue Fail
-        @input = oldInput
-        break
+				@input = oldInput
+				break
 			end
 		end
-    return ans
+		return ans
 	end
 
-  def _many1(x)
+	def _many1(x)
 		_many x, x.call
 	end
 
-  def _form(x)
-    v = _apply "anything"
+	def _form(x)
+		v = _apply "anything"
 		unless v.respond_to? :each
-      raise Fail
+			raise Fail
 		end
-    oldInput = @input
-    @input = LazyStream.new UNDEFINED, UNDEFINED, ReadStream.new(v)
-    r = x.call
-    _apply "end"
-    @input = oldInput
-    return v
+		oldInput = @input
+		@input = LazyStream.new UNDEFINED, UNDEFINED, ReadStream.new(v)
+		r = x.call
+		_apply "end"
+		@input = oldInput
+		return v
 	end
 
-  #// some basic rules
-  def anything
-    r = @input.head
-    @input = @input.tail
-    return r
+	#// some basic rules
+	def anything
+		r = @input.head
+		@input = @input.tail
+		return r
 	end
 
-  def end 
-    _not proc { return _apply("anything") }
+	def end 
+		_not proc { return _apply("anything") }
 	end
 
 	def empty
@@ -305,73 +305,73 @@ class OMeta
 		_apply _apply('anything')
 	end
 
-  def foreign
-    g   = _apply("anything")
-    r   = _apply("anything")
-    fis = LazyStreamWrapper.new @input
-    gi = g.new(fis)
-    ans = gi._apply(r)
-    @input = gi.input.stream
+	def foreign
+		g   = _apply("anything")
+		r   = _apply("anything")
+		fis = LazyStreamWrapper.new @input
+		gi = g.new(fis)
+		ans = gi._apply(r)
+		@input = gi.input.stream
 		#p :foreign => ans
-    return ans
+		return ans
 	end
 
-  #//  some useful "derived" rules
-  def exactly
-    wanted = _apply("anything")
-    if wanted == _apply("anything")
-      return wanted
+	#//  some useful "derived" rules
+	def exactly
+		wanted = _apply("anything")
+		if wanted == _apply("anything")
+			return wanted
 		end
-    raise Fail
+		raise Fail
 	end
 
-  def char
-    r = _apply("anything")
-    _pred(Character === r)
-    return r
+	def char
+		r = _apply("anything")
+		_pred(Character === r)
+		return r
 	end
 
-  def space
-    r = _apply("char")
-    _pred(r[0] <= 32)
-    return r
+	def space
+		r = _apply("char")
+		_pred(r[0] <= 32)
+		return r
 	end
 
-  def spaces
-    _many proc{ _apply("space") }
+	def spaces
+		_many proc{ _apply("space") }
 	end
 
-  def digit
-    r = _apply("char")
-    _pred(r =~ /[0-9]/)
-    return r
+	def digit
+		r = _apply("char")
+		_pred(r =~ /[0-9]/)
+		return r
 	end
 
-  def lower
-    r = _apply("char")
-    _pred(r =~ /[a-z]/)
-    return r
+	def lower
+		r = _apply("char")
+		_pred(r =~ /[a-z]/)
+		return r
 	end
 
-  def upper
-    r = _apply("char")
-    _pred(r =~ /[A-Z]/)
-    return r
+	def upper
+		r = _apply("char")
+		_pred(r =~ /[A-Z]/)
+		return r
 	end
 
-  def letter
+	def letter
 		_or(
 				proc { _apply 'lower' },
 				proc { _apply 'upper' })
 	end
 
-  def letterOrDigit
+	def letterOrDigit
 		_or(
 				proc { _apply 'letter' },
 				proc { _apply 'digit' })
 	end
 
-  def firstAndRest
+	def firstAndRest
 		first = _apply 'anything'
 		rest = _apply 'anything'
 		_many proc { _apply rest }, _apply(first)
@@ -386,21 +386,25 @@ class OMeta
 		xs
 	end
 
-  def notLast
-    rule = _apply("anything")
-    r    = _apply(rule)
-    _lookahead(proc { return _apply(rule) })
-    return r
+	def notLast
+		rule = _apply("anything")
+		r    = _apply(rule)
+		_lookahead(proc { return _apply(rule) })
+		return r
 	end
 
-  def initialize(input)
+	def initialize(input)
 		@input = input
+		initialize_hook
+	end
+	
+	def initialize_hook
 	end
 
-  // #match:with: and #matchAll:with: are a grammar's "public interface"
-  def self.genericMatch(input, rule, *args)
-    m = new(input)
-    begin
+	// #match:with: and #matchAll:with: are a grammar's "public interface"
+	def self.genericMatch(input, rule, *args)
+		m = new(input)
+		begin
 			if args.empty?
 				m._apply(rule)
 			else
@@ -412,26 +416,26 @@ class OMeta
 		end
 	end
 
-  def self.matchwith(obj, rule, *args)
-    genericMatch LazyStream.new(UNDEFINED, UNDEFINED, ReadStream.new([obj])), rule, *args
+	def self.matchwith(obj, rule, *args)
+		genericMatch LazyStream.new(UNDEFINED, UNDEFINED, ReadStream.new([obj])), rule, *args
 	end
 
-  def self.matchAllwith(listyObj, rule, *args)
-    genericMatch LazyStream.new(UNDEFINED, UNDEFINED, ReadStream.new(listyObj)), rule, *args
+	def self.matchAllwith(listyObj, rule, *args)
+		genericMatch LazyStream.new(UNDEFINED, UNDEFINED, ReadStream.new(listyObj)), rule, *args
 	end
 
 	# ----
 
 	def listOf
-    rule  = _apply("anything")
-    delim = _apply("anything")
+		rule  = _apply("anything")
+		delim = _apply("anything")
 		_or(proc {
 			r = _apply(rule)
-      _many(proc {
-        _applyWithArgs("token", delim)
-        _apply(rule)
+			_many(proc {
+				_applyWithArgs("token", delim)
+				_apply(rule)
 				},
-        r)
+				r)
 			},
 			proc { [] }
 		)
@@ -459,7 +463,7 @@ class OMeta
 		begin
 			return matchAllwith(text, rule)
 		rescue Fail => e
-      e.failPos = e.matcher.input.realPos() - 1
+			e.failPos = e.matcher.input.realPos() - 1
 			cause = NICER_FAILURE_METHODS[$@.first[/`(.*?)'/, 1]] || NICER_FAILURE_METHODS[nil]
 			rule = $@.find { |l| l !~ /runtime/ }[/`(.*?)'/, 1]
 			lines = text[0, e.failPos].to_a
