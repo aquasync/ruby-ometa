@@ -1,0 +1,12 @@
+= About
+
+Briefly what OMeta is
+
+= TODO
+
+* finish bootstrapping.
+* add in optimization pass by default, with some flags.
+* perhaps cache compiled rb files as "#{ometa_filename}.rb.cache" or
+  similar, and use them based on mtime / flag combination.
+* try to optimize some more. profile wasn't particularly illuminating.
+
