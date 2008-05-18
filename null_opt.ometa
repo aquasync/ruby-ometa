@@ -1,4 +1,4 @@
-ometa NullOptimization {
+ometa NullOptimizer {
   setHelped = !@_didSomething = true
 	,
   helped    = ?@_didSomething

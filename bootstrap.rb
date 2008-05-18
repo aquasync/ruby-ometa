@@ -163,83 +163,85 @@ return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._a
 end
 end
 
-
-
-
 class RubyOMetaTranslator < OMeta
-def rt
-	self
-end
-
 def trans
-	ans = nil
-return rt._or((proc{return (proc{rt._form(proc{return rt._or((proc{return (proc{
-	
-	t=rt._apply("anything")
-	#p t
-
-	;return ans=rt._applyWithArgs("apply",t)}).call}))});return ans}).call}))
+t = ans = nil
+return (proc{_form(proc{return (proc{t=_apply("anything");return ans=_applyWithArgs("apply",t)}).call});return ans}).call
 end
 
 def App
-return rt._or((proc{return (proc{rt._applyWithArgs("exactly","super");args=rt._many1(proc{return rt._apply("anything")});return ["_superApplyWithArgs(",args.join(","),") { super }"].join("")}).call}),(proc{return (proc{rule=rt._apply("anything");args=rt._many1(proc{return rt._apply("anything")});return ["rt._applyWithArgs(\"",rule,"\",",args.join(","),")"].join("")}).call}),(proc{return (proc{rule=rt._apply("anything");return ["rt._apply(\"",rule,"\")"].join("")}).call}))
+args = rule = args = rule = nil
+return _or((proc{return (proc{_applyWithArgs("exactly","super");args=_many1(proc{return _apply("anything")});return ['_superApplyWithArgs(', args.join(','), ')'].join('')}).call}),(proc{return (proc{rule=_apply("anything");args=_many1(proc{return _apply("anything")});return ['_applyWithArgs("', rule, '",',      args.join(','), ')'].join('')}).call}),(proc{return (proc{rule=_apply("anything");return ['_apply("', rule, '")']                                  .join('')}).call}))
 end
 
 def Act
-return rt._or((proc{return (proc{expr=rt._apply("anything");return expr}).call}))
+expr = nil
+return (proc{expr=_apply("anything");return expr}).call
 end
 
 def Pred
-return rt._or((proc{return (proc{expr=rt._apply("anything");return ["rt._pred(",expr,")"].join("")}).call}))
+expr = nil
+return (proc{expr=_apply("anything");return ['_pred(', expr, ')']                                     .join('')}).call
 end
 
 def Or
-return rt._or((proc{return (proc{xs=rt._many(proc{return rt._apply("transFn")});return ["rt._or(",xs.join(","),")"].join("")}).call}))
+xs = nil
+return (proc{xs=_many(proc{return _apply("transFn")});return ['_or(', xs.join(','), ')']                               .join('')}).call
 end
 
 def And
-return rt._or((proc{return (proc{xs=rt._many(proc{return rt._applyWithArgs("notLast","trans")});y=rt._apply("trans");return (proc{xs.push(("return " + y));return ["(proc{",xs.join(";"),"}).call"].join("")}).call}).call}),(proc{return (proc{return "(proc{})"}).call}))
+xs = y = nil
+return _or((proc{return (proc{xs=_many(proc{return _applyWithArgs("notLast","trans")});y=_apply("trans");return (( xs.push('return ' + y); ['(proc{', xs.join(';'), '}).call'].join('') ))}).call}),(proc{return '(proc{})'}))
 end
 
 def Many
-return rt._or((proc{return (proc{x=rt._apply("trans");return ["rt._many(proc{return ",x,"})"].join("")}).call}))
+x = nil
+return (proc{x=_apply("trans");return ['_many(proc{return ', x, '})']                     .join('')}).call
 end
 
 def Many1
-return rt._or((proc{return (proc{x=rt._apply("trans");return ["rt._many1(proc{return ",x,"})"].join("")}).call}))
+x = nil
+return (proc{x=_apply("trans");return ['_many1(proc{return ', x, '})']                    .join('')}).call
 end
 
 def Set
-return rt._or((proc{return (proc{n=rt._apply("anything");v=rt._apply("trans");return [n,"=",v].join("")}).call}))
+n = v = nil
+return (proc{n=_apply("anything");v=_apply("trans");return [n, '=', v].join('')}).call
 end
 
 def Not
-return rt._or((proc{return (proc{x=rt._apply("trans");return ["rt._not(proc{return ",x,"})"].join("")}).call}))
+x = nil
+return (proc{x=_apply("trans");return ['_not(proc{return ', x, '})']                      .join('')}).call
 end
 
 def Lookahead
-return rt._or((proc{return (proc{x=rt._apply("trans");return ["rt._lookahead(proc{return ",x,"})"].join("")}).call}))
+x = nil
+return (proc{x=_apply("trans");return ['_lookahead(proc{return ', x, '})']                .join('')}).call
 end
 
 def Form
-return rt._or((proc{return (proc{x=rt._apply("trans");return ["rt._form(proc{return ",x,"})"].join("")}).call}))
+x = nil
+return (proc{x=_apply("trans");return ['_form(proc{return ', x, '})']                     .join('')}).call
 end
 
 def Rule
-return rt._or((proc{return (proc{name=rt._apply("anything");locals=rt._apply("anything");body=rt._apply("trans");return ["def ",name,"\n", locals.map { |loc| "#{loc} = "}.join + 'nil', "\nreturn ",body,"\nend\n"].join("")}).call}))
+name = ls = body = nil
+return (proc{name=_apply("anything");ls=_apply("locals");body=_apply("trans");return ["def ", name, "\n", ls, "\nreturn ", body, "\nend\n"]         .join('')}).call
 end
 
 def Grammar
-return rt._or((proc{return (proc{name=rt._apply("anything");sName=rt._apply("anything");rules=rt._many(proc{return rt._apply("trans")});return ["Class.new(", sName, ") do\n@name = ",name.inspect,"\ndef rt; self; end\n",  rules.join("\n"),"end"].join("")}).call}))
+name = sName = rules = nil
+return (proc{name=_apply("anything");sName=_apply("anything");rules=_many(proc{return _apply("trans")});return ["Class.new(", sName, ") do\n@name = ", name.inspect, "\n", rules.join("\n"), 'end']      .join('')}).call
 end
 
 def locals
-return []
-#rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._form(proc{return rt._or((proc{return (proc{return vs=rt._many1(proc{return rt._apply("string")})}).call}))});return ["rt = Runtime"].join("")}).call}),(proc{return (proc{rt._form(proc{return rt._or((proc{return (proc{})}))});return ""}).call}))}).call}))
+vs = nil
+return _or((proc{return (proc{_form(proc{return vs=_many1(proc{return _apply("anything")})});return vs.map { |v| "#{v} = " }.join + 'nil'}).call}),(proc{return (proc{_form(proc{return (proc{})});return ''}).call}))
 end
 
 def transFn
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{x=rt._apply("trans");return ["(proc{return ",x,"})"].join("")}).call}))}).call}))
+x = nil
+return (proc{x=_apply("trans");return ['(proc{return ', x, '})']                               .join('')}).call
 end
 end
 

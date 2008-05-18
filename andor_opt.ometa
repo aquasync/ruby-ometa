@@ -1,4 +1,4 @@
-ometa AndOrOptimization <: NullOptimization {
+ometa AndOrOptimizer <: NullOptimizer {
   And trans:x end          setHelped -> x
 	,
   And transInside('"And"'):xs           -> ['And'].concat(xs)
