@@ -4,36 +4,36 @@ ometa RubyOMetaTranslator {
 	,
   App  'super' anything+:args         -> ['_superApplyWithArgs(', args.join(','), ')'].join('')
 	,
-  App  :rule   anything+:args         -> ['rt._applyWithArgs("', rule, '",',      args.join(','), ')'].join('')
+  App  :rule   anything+:args         -> ['_applyWithArgs("', rule, '",',      args.join(','), ')'].join('')
 	,
-  App  :rule                          -> ['rt._apply("', rule, '")']                                  .join('')
+  App  :rule                          -> ['_apply("', rule, '")']                                  .join('')
 	,
   Act  :expr                          -> expr
 	,
-  Pred :expr                          -> ['rt._pred(', expr, ')']                                     .join('')
+  Pred :expr                          -> ['_pred(', expr, ')']                                     .join('')
 	,
-  Or   transFn*:xs                    -> ['rt._or(', xs.join(','), ')']                               .join('')
+  Or   transFn*:xs                    -> ['_or(', xs.join(','), ')']                               .join('')
 	,
   And  notLast('"trans"')*:xs trans:y    -> (( xs.push('return ' + y); ['(proc{', xs.join(';'), '}).call'].join('') ))
 	,
   And                                 -> '(proc{})'
 	,
-  Many  trans:x                       -> ['rt._many(proc{return ', x, '})']                     .join('')
+  Many  trans:x                       -> ['_many(proc{return ', x, '})']                     .join('')
 	,
-  Many1 trans:x                       -> ['rt._many1(proc{return ', x, '})']                    .join('')
+  Many1 trans:x                       -> ['_many1(proc{return ', x, '})']                    .join('')
 	,
   Set   :n trans:v                    -> [n, '=', v].join('')
 	,
-  Not   trans:x                       -> ['rt._not(proc{return ', x, '})']                      .join('')
+  Not   trans:x                       -> ['_not(proc{return ', x, '})']                      .join('')
 	,
-  Lookahead trans:x                   -> ['rt._lookahead(proc{return ', x, '})']                .join('')
+  Lookahead trans:x                   -> ['_lookahead(proc{return ', x, '})']                .join('')
 	,
-  Form  trans:x                       -> ['rt._form(proc{return ', x, '})']                     .join('')
+  Form  trans:x                       -> ['_form(proc{return ', x, '})']                     .join('')
 	,
   Rule  :name locals:ls trans:body    -> ["def ", name, "\n", ls, "\nreturn ", body, "\nend\n"]         .join('')
 	,
   Grammar :name :sName
-          trans*:rules                -> ["Class.new(", sName, ") do\n@name = ", name.inspect, "\ndef rt; self; end\n", rules.join("\n"), 'end']      .join('')
+          trans*:rules                -> ["Class.new(", sName, ") do\n@name = ", name.inspect, "\n", rules.join("\n"), 'end']      .join('')
 					,
   locals  = [anything+:vs]              -> vs.map { |v| "#{v} = " }.join + 'nil'
           | []                        -> ''
