@@ -7,16 +7,14 @@ class String
 end
 
 class BSRubyParser < OMeta
-def rt
-	self
-end
-
 	def eChar
-	return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("exactly","\\");c=rt._apply("char");return eval("\"\\" + c + "\"")}).call}),(proc{return (proc{return rt._apply("char")}).call}))}).call}))
+	c = nil
+	return _or((proc{return (proc{_applyWithArgs("exactly","\\");c=_apply("char");return eval("\"\\" + c + "\"")}).call}),(proc{return _apply("char")}))
 	end
 
 	def tsString
-	return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("exactly","\'");xs=rt._many(proc{return rt._or((proc{return (proc{rt._not(proc{return rt._applyWithArgs("exactly","\'")});return rt._apply("eChar")}).call}))});rt._applyWithArgs("exactly","\'");return xs.join("")}).call}))}).call}))
+	xs = nil
+	return (proc{_applyWithArgs("exactly","'");xs=_many(proc{return (proc{_not(proc{return _applyWithArgs("exactly","'")});return _apply("eChar")}).call});_applyWithArgs("exactly","'");return xs.join('')}).call
 	end
 
 	def expr
@@ -40,126 +38,139 @@ class BSRubyTranslator < OMeta
 end
 
 class OMetaParser < OMeta
-def rt
-	self
-end
-
 def nameFirst
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{return rt._applyWithArgs("exactly","_")}).call}),(proc{return (proc{return rt._applyWithArgs("exactly","$")}).call}),(proc{return (proc{return rt._apply("letter")}).call}))}).call}))
+
+return _or((proc{return _applyWithArgs("exactly","_")}),(proc{return _applyWithArgs("exactly","$")}),(proc{return _apply("letter")}))
 end
 
 def nameRest
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{return rt._apply("nameFirst")}).call}),(proc{return (proc{return rt._apply("digit")}).call}))}).call}))
+
+return _or((proc{return _apply("nameFirst")}),(proc{return _apply("digit")}))
 end
 
 def tsName
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{xs=rt._applyWithArgs("firstAndRest","nameFirst","nameRest");return xs.join("")}).call}))}).call}))
+xs = nil
+return (proc{xs=_applyWithArgs("firstAndRest","nameFirst","nameRest");return xs.join('')}).call
 end
 
 def name
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._apply("spaces");return rt._apply("tsName")}).call}))}).call}))
+
+return (proc{_apply("spaces");return _apply("tsName")}).call
 end
 
 def eChar
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("exactly","\\");c=rt._apply("char");return eval("\"\\" + c + "\"")}).call}),(proc{return (proc{return rt._apply("char")}).call}))}).call}))
+c = nil
+return _or((proc{return (proc{_applyWithArgs("exactly","\\");c=_apply("char");return eval("\"\\" + c + "\"")}).call}),(proc{return _apply("char")}))
 end
 
 def tsString
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("exactly","\'");xs=rt._many(proc{return rt._or((proc{return (proc{rt._not(proc{return rt._applyWithArgs("exactly","\'")});return rt._apply("eChar")}).call}))});rt._applyWithArgs("exactly","\'");return xs.join("")}).call}))}).call}))
+xs = nil
+return (proc{_applyWithArgs("exactly","'");xs=_many(proc{return (proc{_not(proc{return _applyWithArgs("exactly","'")});return _apply("eChar")}).call});_applyWithArgs("exactly","'");return xs.join('')}).call
 end
 
 def characters
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("exactly","`");rt._applyWithArgs("exactly","`");xs=rt._many(proc{return rt._or((proc{return (proc{rt._not(proc{return rt._or((proc{return (proc{rt._applyWithArgs("exactly","\'");return rt._applyWithArgs("exactly","\'")}).call}))});return rt._apply("eChar")}).call}))});rt._applyWithArgs("exactly","\'");rt._applyWithArgs("exactly","\'");return ["App","seq",xs.join("").toProgramString()]}).call}))}).call}))
+xs = nil
+return (proc{_applyWithArgs("exactly","`");_applyWithArgs("exactly","`");xs=_many(proc{return (proc{_not(proc{return (proc{_applyWithArgs("exactly","'");return _applyWithArgs("exactly","'")}).call});return _apply("eChar")}).call});_applyWithArgs("exactly","'");_applyWithArgs("exactly","'");return ['App', 'seq',     xs.join('').toProgramString()]}).call
 end
 
 def sCharacters
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("exactly","\"");xs=rt._many(proc{return rt._or((proc{return (proc{rt._not(proc{return rt._applyWithArgs("exactly","\"")});return rt._apply("eChar")}).call}))});rt._applyWithArgs("exactly","\"");return ["App","token",xs.join("").toProgramString()]}).call}))}).call}))
+xs = nil
+return (proc{_applyWithArgs("exactly","\"");xs=_many(proc{return (proc{_not(proc{return _applyWithArgs("exactly","\"")});return _apply("eChar")}).call});_applyWithArgs("exactly","\"");return ['App', 'token',   xs.join('').toProgramString()]}).call
 end
 
 def string
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{xs=rt._or((proc{return (proc{rt._or((proc{return (proc{return rt._applyWithArgs("exactly","#")}).call}),(proc{return (proc{return rt._applyWithArgs("exactly","`")}).call}));return rt._apply("tsName")}).call}),(proc{return (proc{return rt._apply("tsString")}).call}));return ["App","exactly",xs.toProgramString()]}).call}))}).call}))
+xs = nil
+return (proc{xs=_or((proc{return (proc{_or((proc{return _applyWithArgs("exactly","#")}),(proc{return _applyWithArgs("exactly","`")}));return _apply("tsName")}).call}),(proc{return _apply("tsString")}));return ['App', 'exactly', xs.toProgramString()]}).call
 end
 
 def number
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{sign=rt._or((proc{return (proc{return rt._applyWithArgs("exactly","-")}).call}),(proc{return (proc{rt._apply("empty");return ""}).call}));ds=rt._many1(proc{return rt._apply("digit")});return ["App","exactly",(sign + ds.join(""))]}).call}))}).call}))
+sign = ds = nil
+return (proc{sign=_or((proc{return _applyWithArgs("exactly","-")}),(proc{return (proc{_apply("empty");return ''}).call}));ds=_many1(proc{return _apply("digit")});return ['App', 'exactly', sign + ds.join('')]}).call
 end
 
 def keyword
 xs = nil
-return rt._or((proc{return (proc{(proc{return xs=rt._apply("anything")}).call;return rt._or((proc{return (proc{rt._applyWithArgs("token",xs);rt._not(proc{return rt._apply("letterOrDigit")});return xs}).call}))}).call}))
+return (proc{xs=_apply("anything");_applyWithArgs("token",xs);_not(proc{return _apply("letterOrDigit")});return xs}).call
 end
 
 def hostExpr
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{r=rt._applyWithArgs("foreign",BSRubyParser,"expr");return rt._applyWithArgs("foreign",BSRubyTranslator,"trans",r)}).call}))}).call}))
+r = nil
+return (proc{r=_applyWithArgs("foreign",BSRubyParser,"expr");return _applyWithArgs("foreign",BSRubyTranslator,"trans",r)}).call
 end
 
 def atomicHostExpr
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{r=rt._applyWithArgs("foreign",BSRubyParser,"semAction");return rt._applyWithArgs("foreign",BSRubyTranslator,"trans",r)}).call}))}).call}))
+r = nil
+return (proc{r=_applyWithArgs("foreign",BSRubyParser,"semAction");return _applyWithArgs("foreign",BSRubyTranslator,"trans",r)}).call
 end
 
 def args
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("token","(");xs=rt._applyWithArgs("listOf","hostExpr",",");rt._applyWithArgs("token",")");return xs}).call}),(proc{return (proc{rt._apply("empty");return []}).call}))}).call}))
+xs = nil
+return _or((proc{return (proc{_applyWithArgs("token","(");xs=_applyWithArgs("listOf","hostExpr",",");_applyWithArgs("token",")");return xs}).call}),(proc{return (proc{_apply("empty");return []}).call}))
 end
 
 def application
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rule=rt._apply("name");as=rt._apply("args");return ["App",rule].concat(as)}).call}))}).call}))
+rule = as = nil
+return (proc{rule=_apply("name");as=_apply("args");return ['App', rule].concat(as)}).call
 end
 
 def semAction
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._or((proc{return (proc{return rt._applyWithArgs("token","!")}).call}),(proc{return (proc{return rt._applyWithArgs("token","->")}).call}));x=rt._apply("atomicHostExpr");return ["Act",x]}).call}))}).call}))
+x = nil
+return (proc{_or((proc{return _applyWithArgs("token","!")}),(proc{return _applyWithArgs("token","->")}));x=_apply("atomicHostExpr");return ['Act',  x]}).call
 end
 
 def semPred
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("token","?");x=rt._apply("atomicHostExpr");return ["Pred",x]}).call}))}).call}))
+x = nil
+return (proc{_applyWithArgs("token","?");x=_apply("atomicHostExpr");return ['Pred', x]}).call
 end
 
 def expr
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{xs=rt._applyWithArgs("listOf","expr4","|");return ["Or"].concat(xs)}).call}))}).call}))
+xs = nil
+return (proc{xs=_applyWithArgs("listOf","expr4","|");return ['Or'].concat(xs)}).call
 end
 
 def expr4
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{xs=rt._many(proc{return rt._apply("expr3")});return ["And"].concat(xs)}).call}))}).call}))
+xs = nil
+return (proc{xs=_many(proc{return _apply("expr3")});return ['And'].concat(xs)}).call
 end
 
 def optIter
 x = nil
-return rt._or((proc{return (proc{(proc{return x=rt._apply("anything")}).call;return rt._or((proc{return (proc{rt._applyWithArgs("token","*");return ["Many",x]}).call}),(proc{return (proc{rt._applyWithArgs("token","+");return ["Many1",x]}).call}),(proc{return (proc{rt._apply("empty");return x}).call}))}).call}))
+return (proc{x=_apply("anything");return _or((proc{return (proc{_applyWithArgs("token","*");return ['Many',  x]}).call}),(proc{return (proc{_applyWithArgs("token","+");return ['Many1', x]}).call}),(proc{return (proc{_apply("empty");return x}).call}))}).call
 end
 
 def expr3
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{x=rt._apply("expr2");x=rt._applyWithArgs("optIter",x);return rt._or((proc{return (proc{rt._applyWithArgs("exactly",":");n=rt._apply("name");return (proc{@locals << n; return ["Set",n,x]}).call}).call}),(proc{return (proc{rt._apply("empty");return x}).call}))}).call}),(proc{return (proc{rt._applyWithArgs("token",":");n=rt._apply("name");return (proc{@locals << n; return ["Set",n,["App","anything"]]}).call}).call}))}).call}))
+x = x = n = n = nil
+return _or((proc{return (proc{x=_apply("expr2");x=_applyWithArgs("optIter",x);return _or((proc{return (proc{_applyWithArgs("exactly",":");n=_apply("name");return (@locals << n; ['Set', n, x])}).call}),(proc{return (proc{_apply("empty");return x}).call}))}).call}),(proc{return (proc{_applyWithArgs("token",":");n=_apply("name");return (@locals << n; ['Set', n, ['App', 'anything']])}).call}))
 end
 
 def expr2
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("token","~");x=rt._apply("expr2");return ["Not",x]}).call}),(proc{return (proc{rt._applyWithArgs("token","&");x=rt._apply("expr1");return ["Lookahead",x]}).call}),(proc{return (proc{return rt._apply("expr1")}).call}))}).call}))
+x = x = nil
+return _or((proc{return (proc{_applyWithArgs("token","~");x=_apply("expr2");return ['Not',       x]}).call}),(proc{return (proc{_applyWithArgs("token","&");x=_apply("expr1");return ['Lookahead', x]}).call}),(proc{return _apply("expr1")}))
 end
 
 def expr1
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{return rt._apply("application")}).call}),(proc{return (proc{return rt._apply("semAction")}).call}),(proc{return (proc{return rt._apply("semPred")}).call}),(proc{return (proc{x=rt._or((proc{return (proc{return rt._applyWithArgs("keyword","undefined")}).call}),(proc{return (proc{return rt._applyWithArgs("keyword","nil")}).call}),(proc{return (proc{return rt._applyWithArgs("keyword","true")}).call}),(proc{return (proc{return rt._applyWithArgs("keyword","false")}).call}));return ["App","exactly",x]}).call}),(proc{return (proc{rt._apply("spaces");return rt._or((proc{return (proc{return rt._apply("characters")}).call}),(proc{return (proc{return rt._apply("sCharacters")}).call}),(proc{return (proc{return rt._apply("string")}).call}),(proc{return (proc{return rt._apply("number")}).call}))}).call}),(proc{return (proc{rt._applyWithArgs("token","[");x=rt._apply("expr");rt._applyWithArgs("token","]");return ["Form",x]}).call}),(proc{return (proc{rt._applyWithArgs("token","(");x=rt._apply("expr");rt._applyWithArgs("token",")");return x}).call}))}).call}))
+x = x = x = nil
+return _or((proc{return _apply("application")}),(proc{return _apply("semAction")}),(proc{return _apply("semPred")}),(proc{return (proc{x=_or((proc{return _applyWithArgs("keyword","undefined")}),(proc{return _applyWithArgs("keyword","nil")}),(proc{return _applyWithArgs("keyword","true")}),(proc{return _applyWithArgs("keyword","false")}));return ['App', 'exactly', x]}).call}),(proc{return (proc{_apply("spaces");return _or((proc{return _apply("characters")}),(proc{return _apply("sCharacters")}),(proc{return _apply("string")}),(proc{return _apply("number")}))}).call}),(proc{return (proc{_applyWithArgs("token","[");x=_apply("expr");_applyWithArgs("token","]");return ['Form', x]}).call}),(proc{return (proc{_applyWithArgs("token","(");x=_apply("expr");_applyWithArgs("token",")");return x}).call}))
 end
 
 def ruleName
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{return rt._apply("name")}).call}),(proc{return (proc{rt._apply("spaces");return rt._apply("tsString")}).call}))}).call}))
+
+return _or((proc{return _apply("name")}),(proc{return (proc{_apply("spaces");return _apply("tsString")}).call}))
 end
 
 def rule
-n = nil
-x = nil
-return rt._or((proc{return (proc{(proc{});
-														return rt._or((proc{return (proc{rt._lookahead(
-	proc{return rt._or((proc{return (proc{return n=rt._apply("ruleName")}).call}))});
-	@locals = []
-	x=rt._applyWithArgs("rulePart",n);xs=rt._many(proc{return rt._or((proc{return (proc{rt._applyWithArgs("token",",");return rt._applyWithArgs("rulePart",n)}).call}))});return ["Rule",n,@locals,["Or",x].concat(xs)]}).call}))}).call}))
+n = x = xs = nil
+return (proc{_lookahead(proc{return n=_apply("ruleName")});@locals = [];x=_applyWithArgs("rulePart",n);xs=_many(proc{return (proc{_applyWithArgs("token",",");return _applyWithArgs("rulePart",n)}).call});return ['Rule', n, @locals, ['Or', x].concat(xs)]}).call
 end
 
 def rulePart
-n = nil
-rn = nil
-return rt._or((proc{return (proc{(proc{return rn=rt._apply("anything")}).call;return rt._or((proc{return (proc{n=rt._apply("ruleName");rt._pred((n == rn));b1=rt._apply("expr4");return rt._or((proc{return (proc{rt._applyWithArgs("token","=");b2=rt._apply("expr");return ["And",b1,b2]}).call}),(proc{return (proc{rt._apply("empty");return b1}).call}))}).call}))}).call}))
+rn = n = b1 = b2 = nil
+return (proc{rn=_apply("anything");n=_apply("ruleName");_pred(n == rn);b1=_apply("expr4");return _or((proc{return (proc{_applyWithArgs("token","=");b2=_apply("expr");return ['And', b1, b2]}).call}),(proc{return (proc{_apply("empty");return b1}).call}))}).call
 end
 
 def grammar
-return rt._or((proc{return (proc{(proc{});return rt._or((proc{return (proc{rt._applyWithArgs("keyword","ometa");n=rt._apply("name");sn=rt._or((proc{return (proc{rt._applyWithArgs("token","<:");return rt._apply("name")}).call}),(proc{return (proc{rt._apply("empty");return "OMeta"}).call}));rt._applyWithArgs("token","{");rs=rt._applyWithArgs("listOf","rule",",");rt._applyWithArgs("token","}");return ["Grammar",n,sn].concat(rs)}).call}))}).call}))
+n = sn = rs = nil
+return (proc{_applyWithArgs("keyword","ometa");n=_apply("name");sn=_or((proc{return (proc{_applyWithArgs("token","<:");return _apply("name")}).call}),(proc{return (proc{_apply("empty");return OMeta}).call}));_applyWithArgs("token","{");rs=_applyWithArgs("listOf","rule",",");_applyWithArgs("token","}");return ['Grammar', n, sn].concat(rs)}).call
 end
 end
 

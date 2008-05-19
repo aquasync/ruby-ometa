@@ -1,5 +1,5 @@
 
-ometa OMetaParser <: Parser {
+ometa OMetaParser <: OMeta {
   nameFirst      = '_' | '$' | letter,
   nameRest       = nameFirst | digit,
   tsName         = firstAndRest('"nameFirst"', '"nameRest"'):xs              -> xs.join('')
@@ -23,7 +23,7 @@ ometa OMetaParser <: Parser {
 	,
   hostExpr       = foreign('BSRubyParser', '"expr"'):r                           foreign('BSRubyTranslator', '"trans"', 'r'),
   atomicHostExpr = foreign('BSRubyParser', '"semAction"'):r                      foreign('BSRubyTranslator', '"trans"', 'r'),
-  args           = "(" listOf('hostExpr', '","'):xs ")"                   -> xs
+  args           = "(" listOf('"hostExpr"', '","'):xs ")"                   -> xs
                  | empty                                               -> []
 	,
   application    = name:rule args:as                                   -> ['App', rule].concat(as)
@@ -32,7 +32,7 @@ ometa OMetaParser <: Parser {
 	,
   semPred        = "?"          atomicHostExpr:x                       -> ['Pred', x]
 	,
-  expr           = listOf('expr4', '"|"'):xs                              -> ['Or'].concat(xs)
+  expr           = listOf('"expr4"', '"|"'):xs                              -> ['Or'].concat(xs)
 	,
   expr4          = expr3*:xs                                           -> ['And'].concat(xs)
 	,
