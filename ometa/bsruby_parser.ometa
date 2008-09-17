@@ -1,0 +1,11 @@
+
+ometa BSRubyParser <: OMeta {
+  eChar          = '\\' char:c                                         ->  { 'n' => "\n", 't' => "\t", 'r' => "\r", '\'' => "'", '\"' => '"', '\\' => '\\' }[c]
+                 | char,
+  tsString       = '\'' (~'\'' eChar)*:xs '\''                         -> xs.join('')
+	,
+	expr           = spaces tsString
+	,
+	semAction      = spaces (~seq('"\\n"') anything)*:xs                 -> xs.join('')
+}
+

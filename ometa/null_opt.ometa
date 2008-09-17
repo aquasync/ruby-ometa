@@ -3,7 +3,7 @@ ometa NullOptimizer {
 	,
   helped    = ?@_didSomething
 	,
-  trans     = [:t ?respond_to? t
+  trans     = [:t ?respond_to?(t)
 							 apply('t'):ans] -> ans
             | anything,
   optimize  = trans:x helped     -> x

@@ -5,7 +5,7 @@ ometa OMetaParser <: OMeta {
   tsName         = firstAndRest('"nameFirst"', '"nameRest"'):xs              -> xs.join('')
 	,
 	name           = spaces tsName,
-  eChar          = '\\' char:c                                         ->  eval("\"\\" + c + "\"")
+  eChar          = '\\' char:c                                         ->  { 'n' => "\n", 't' => "\t", 'r' => "\r", '\'' => "'", '\"' => '"', '\\' => '\\' }[c]
                  | char,
   tsString       = '\'' (~'\'' eChar)*:xs '\''                         -> xs.join('')
 	,

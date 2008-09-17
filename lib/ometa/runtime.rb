@@ -124,7 +124,8 @@ class LazyInputStreamEnd < Stream
 	end
 
 	def head
-		raise Fail #EOFError
+		#throw :fail, true #raise Fail #EOFError
+		raise Fail
 	end
 
 	def tail
@@ -176,10 +177,8 @@ class OMeta
 				while true
 					begin
 						@input = oldInput
-						ans = method(rule).call
-						if @input == sentinel
-							raise Fail
-						end
+						ans = send rule
+						raise Fail if @input == sentinel
 						oldInput.memo[rule] = memoRec = {:ans => ans, :nextInput => @input}
 					rescue Fail
 						break
@@ -188,7 +187,7 @@ class OMeta
 			end
 		elsif LeftRecursion === memoRec
 			memoRec.detected = true
-			raise Fail
+			raise Fail #throw :fail, true
 		end
 		@input = memoRec[:nextInput]
 		return memoRec[:ans]
@@ -231,10 +230,11 @@ class OMeta
 		begin
 			x.call
 		rescue Fail
-			@input = oldInput
-			return true
+		else
+			raise Fail
 		end
-		raise Fail
+		@input = oldInput
+		return true
 	end
 
 	def _lookahead(x)
@@ -261,10 +261,11 @@ class OMeta
 			oldInput = @input.copy
 			begin
 				ans << x.call
+				next
 			rescue Fail
-				@input = oldInput
-				break
 			end
+			@input = oldInput
+			break
 		end
 		return ans
 	end
@@ -275,9 +276,7 @@ class OMeta
 
 	def _form(x)
 		v = _apply "anything"
-		unless v.respond_to? :each
-			raise Fail
-		end
+		raise Fail unless v.respond_to? :each
 		oldInput = @input
 		@input = LazyStream.new UNDEFINED, UNDEFINED, ReadStream.new(v)
 		r = x.call
@@ -322,7 +321,7 @@ class OMeta
 		if wanted == _apply("anything")
 			return wanted
 		end
-		raise Fail
+		raise Fail #throw :fail, true
 	end
 
 	def char
@@ -404,16 +403,20 @@ class OMeta
 	// #match:with: and #matchAll:with: are a grammar's "public interface"
 	def self.genericMatch(input, rule, *args)
 		m = new(input)
+		e = nil
 		begin
 			if args.empty?
-				m._apply(rule)
+				return m._apply(rule)
 			else
-				m._applyWithArgs(rule, *args)
+				return m._applyWithArgs(rule, *args)
 			end
 		rescue Fail
-			$!.matcher = m
-			raise
+			e = $!
 		end
+		#e = Fail.new
+		e.matcher = m
+		e.message.replace "Unable to match at pos #{m.input.instance_variable_get(:@stream).pos.inspect}"
+		raise e
 	end
 
 	def self.matchwith(obj, rule, *args)
@@ -474,17 +477,10 @@ class OMeta
 	end
 end
 
-__END__
-
-current process:
-
-g = File.read('ometa_parser.ometa'); puts g
-
-begin; data = OMetaParser.matchAllwith(g, 'grammar'); rescue; $x = $!; $y = $@; end
-
-str = RubyOMetaTranslator.matchwith(data, 'trans')
-
-eval str
-
-...
+# this doesn't really belong here. mostly a relic of the javascript port
+class String
+	def toProgramString
+		inspect
+	end
+end
 
