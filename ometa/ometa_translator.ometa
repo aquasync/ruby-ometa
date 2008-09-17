@@ -10,27 +10,27 @@ ometa RubyOMetaTranslator {
 	,
   Act  :expr                          -> expr
 	,
-  Pred :expr                          -> ['_pred(', expr, ')']                                     .join('')
+  Pred :expr                          -> "_pred(#{expr})"
 	,
-  Or   transFn*:xs                    -> ['_or(', xs.join(','), ')']                               .join('')
+  Or   transFn*:xs                    -> "_or(#{xs * ', '})"
 	,
-  And  notLast('"trans"')*:xs trans:y    -> (( xs.push('return ' + y); ['(proc{', xs.join(';'), '}).call'].join('') ))
+  And  notLast('"trans"')*:xs trans:y    -> "(#{(xs + [y]) * ';'})"
 	,
-  And                                 -> '(proc{})'
+  And                                 -> "proc {}"
 	,
-  Many  trans:x                       -> ['_many(proc{return ', x, '})']                     .join('')
+  Many  trans:x                       -> "_xmany { #{x} }"
 	,
-  Many1 trans:x                       -> ['_many1(proc{return ', x, '})']                    .join('')
+  Many1 trans:x                       -> "_xmany1 { #{x} }"
 	,
-  Set   :n trans:v                    -> [n, '=', v].join('')
+  Set   :n trans:v                    -> "#{n} = #{v}"
 	,
-  Not   trans:x                       -> ['_not(proc{return ', x, '})']                      .join('')
+  Not   trans:x                       -> "_xnot { #{x} }"
 	,
-  Lookahead trans:x                   -> ['_lookahead(proc{return ', x, '})']                .join('')
+  Lookahead trans:x                   -> "_xlookahead { #{x} }"
 	,
-  Form  trans:x                       -> ['_form(proc{return ', x, '})']                     .join('')
+  Form  trans:x                       -> "_xform { #{x} }"
 	,
-  Rule  :name locals:ls trans:body    -> ["def ", name, "\n", ls, "\nreturn ", body, "\nend\n"]         .join('')
+  Rule  :name locals:ls trans:body    -> "def #{name}\n#{ls}\n#{body}\nend\n"
 	,
   Grammar :name :sName
           trans*:rules                -> ["Class.new(", sName, ") do\n@name = ", name.inspect, "\n", rules.join("\n"), 'end']      .join('')
@@ -38,6 +38,6 @@ ometa RubyOMetaTranslator {
   locals  = [anything+:vs]              -> vs.map { |v| "#{v} = " }.join + 'nil'
           | []                        -> ''
 	,
-  transFn = trans:x                   -> ['(proc{return ', x, '})']                               .join('')
+  transFn = trans:x                   -> "proc { #{x} }"
 }
 

@@ -8,3 +8,6 @@ Briefly what OMeta is, some links to the ometajs stuff.
   similar, and use them based on mtime / flag combination.
 * try to optimize some more. profile wasn't particularly illuminating.
 * then write some actual tests.
+* i think that super is actually broken at the moment, and its not used
+  in the standard grammar. the js one uses it, so could test with that.
+

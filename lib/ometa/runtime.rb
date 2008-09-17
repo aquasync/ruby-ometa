@@ -6,7 +6,7 @@ class Fail < StandardError
 end
 
 class Character < String
-	undef_method :each
+	undef_method :each if ''.respond_to?(:each)
 
 	class StringWrapper
 		include Enumerable
@@ -225,23 +225,22 @@ class OMeta
 		raise Fail
 	end
 
-	def _not(x)
+	def _xnot
 		oldInput = @input.copy
 		begin
-			x.call
+			yield
 		rescue Fail
-		else
-			raise Fail
+			@input = oldInput
+			return true
 		end
-		@input = oldInput
-		return true
+		raise Fail
 	end
 
-	def _lookahead(x)
+	def _xlookahead
 		oldInput = @input.copy
-		r = x.call
+		r = yield
 		@input = oldInput
-		return r
+		r
 	end
 
 	def _or(*args)
@@ -256,33 +255,33 @@ class OMeta
 		raise Fail
 	end
 
-	def _many(x, *ans)
+	def _xmany(*ans)
 		while true
 			oldInput = @input.copy
 			begin
-				ans << x.call
+				ans << yield
 				next
 			rescue Fail
 			end
 			@input = oldInput
 			break
 		end
-		return ans
+		ans
 	end
 
-	def _many1(x)
-		_many x, x.call
+	def _xmany1(&block)
+		_xmany block.call, &block
 	end
 
-	def _form(x)
+	def _xform
 		v = _apply "anything"
 		raise Fail unless v.respond_to? :each
 		oldInput = @input
 		@input = LazyStream.new UNDEFINED, UNDEFINED, ReadStream.new(v)
-		r = x.call
+		r = yield
 		_apply "end"
 		@input = oldInput
-		return v
+		v
 	end
 
 	#// some basic rules
@@ -293,7 +292,7 @@ class OMeta
 	end
 
 	def end 
-		_not proc { return _apply("anything") }
+		_xnot { _apply("anything") }
 	end
 
 	def empty
@@ -337,7 +336,7 @@ class OMeta
 	end
 
 	def spaces
-		_many proc{ _apply("space") }
+		_xmany { _apply("space") }
 	end
 
 	def digit
@@ -373,7 +372,7 @@ class OMeta
 	def firstAndRest
 		first = _apply 'anything'
 		rest = _apply 'anything'
-		_many proc { _apply rest }, _apply(first)
+		_xmany(_apply(first)) { _apply rest }
 	end
 
 	def seq
@@ -388,7 +387,7 @@ class OMeta
 	def notLast
 		rule = _apply("anything")
 		r    = _apply(rule)
-		_lookahead(proc { return _apply(rule) })
+		_xlookahead { _apply(rule) }
 		return r
 	end
 
@@ -434,11 +433,10 @@ class OMeta
 		delim = _apply("anything")
 		_or(proc {
 			r = _apply(rule)
-			_many(proc {
+			_xmany(r) {
 				_applyWithArgs("token", delim)
 				_apply(rule)
-				},
-				r)
+				}
 			},
 			proc { [] }
 		)
