@@ -399,7 +399,7 @@ class OMeta
 	def initialize_hook
 	end
 
-	// #match:with: and #matchAll:with: are a grammar's "public interface"
+	# #match:with: and #matchAll:with: are a grammar's "public interface"
 	def self.genericMatch(input, rule, *args)
 		m = new(input)
 		e = nil
@@ -481,4 +481,3 @@ class OMeta
 	end
 end
 
-class String; def toProgramString; inspect; end; end
