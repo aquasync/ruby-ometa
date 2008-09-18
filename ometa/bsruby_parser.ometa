@@ -1,11 +1,24 @@
 
 ometa BSRubyParser <: OMeta {
-  eChar          = '\\' char:c                                         ->  { 'n' => "\n", 't' => "\t", 'r' => "\r", '\'' => "'", '\"' => '"', '\\' => '\\' }[c]
+  eChar          = '\\' char:c                                         -> Hash['n' => "\n", 't' => "\t", 'r' => "\r", '\'' => "'", '\"' => '"', '\\' => '\\'][c]
                  | char,
   tsString       = '\'' (~'\'' eChar)*:xs '\''                         -> xs.join('')
 	,
 	expr           = spaces tsString
 	,
-	semAction      = spaces (~seq('"\\n"') anything)*:xs                 -> xs.join('')
+	oldStyleSemAction      = spaces (~seq('"\\n"') anything)*:xs                 -> xs.join('')
+ ,
+ 	nonBraceChar = ~'{' ~'}' char
+ ,
+ 	inside = innerMatchedBraces | nonBraceChar
+ ,
+ 	innerMatchedBraces = '{' inside*:xs '}' -> "{#{xs.join('')}}"
+ ,
+ 	outerMatchedBraces = '{' inside*:xs '}' -> xs.join('')
+ ,
+ 	newStyleSemAction = spaces outerMatchedBraces:x -> p 'using new style sem action' => x; x
+ ,
+  semAction      = newStyleSemAction | oldStyleSemAction
+
 }
 
