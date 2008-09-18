@@ -1,34 +1,19 @@
 ometa NullOptimizer {
-  setHelped = !@_didSomething = true
-	,
-  helped    = ?@_didSomething
-	,
-  trans     = [:t ?respond_to?(t)
-							 apply('t'):ans] -> ans
+  setHelped = !{@_didSomething = true},
+  helped    = ?{@_didSomething},
+  trans     = [:t ?{respond_to?(t)}
+               apply('t'):ans]   -> { ans }
             | anything,
-  optimize  = trans:x helped     -> x
-	,
-
-  Or        trans*:xs            -> ['Or'].concat(xs)
-	,
-  And       trans*:xs            -> ['And'].concat(xs)
-	,
-  Many      trans:x              -> ['Many',      x]
-	,
-  Many1     trans:x              -> ['Many1',     x]
-	,
-  Set       :n trans:v           -> ['Set',       n, v]
-	,
-  Not       trans:x              -> ['Not',       x]
-	,
-  Lookahead trans:x              -> ['Lookahead', x]
-	,
-  Form      trans:x              -> ['Form',      x]
-	,
-  Rule      :name :ls trans:body -> ['Rule',      name, ls, body]
-	,
-
-	initialize										 -> @_didSomething = false
+  optimize  = trans:x helped     -> { x },
+  Or        trans*:xs            -> { ['Or',      *xs] },
+  And       trans*:xs            -> { ['And',     *xs] },
+  Many      trans:x              -> { ['Many',      x] },
+  Many1     trans:x              -> { ['Many1',     x] },
+  Set       :n trans:v           -> { ['Set',    n, v] },
+  Not       trans:x              -> { ['Not',       x] },
+  Lookahead trans:x              -> { ['Lookahead', x] },
+  Form      trans:x              -> { ['Form',      x] },
+  Rule      :name :ls trans:body -> { ['Rule', name, ls, body] },
+  initialize                     -> { @_didSomething = false }
 }
-
 

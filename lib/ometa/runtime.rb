@@ -473,12 +473,12 @@ class OMeta
 			raise e, message #, $@
 		end
 	end
-end
 
-# this doesn't really belong here. mostly a relic of the javascript port
-class String
-	def toProgramString
-		inspect
+	ESCAPE_LOOKUP = {'n' => "\n", 't' => "\t", 'r' => "\r", '\'' => "'", '\"' => '"', '\\' => '\\'}
+
+	def unescapeChar c
+		ESCAPE_LOOKUP[c] or raise NotImplementedError
 	end
 end
 
+class String; def toProgramString; inspect; end; end

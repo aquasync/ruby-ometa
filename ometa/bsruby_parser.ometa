@@ -1,24 +1,15 @@
 
 ometa BSRubyParser <: OMeta {
-  eChar          = '\\' char:c                                         -> Hash['n' => "\n", 't' => "\t", 'r' => "\r", '\'' => "'", '\"' => '"', '\\' => '\\'][c]
+  eChar          = '\\' char:c                            -> { unescapeChar c }
                  | char,
-  tsString       = '\'' (~'\'' eChar)*:xs '\''                         -> xs.join('')
-	,
-	expr           = spaces tsString
-	,
-	oldStyleSemAction      = spaces (~seq('"\\n"') anything)*:xs                 -> xs.join('')
- ,
- 	nonBraceChar = ~'{' ~'}' char
- ,
- 	inside = innerMatchedBraces | nonBraceChar
- ,
- 	innerMatchedBraces = '{' inside*:xs '}' -> "{#{xs.join('')}}"
- ,
- 	outerMatchedBraces = '{' inside*:xs '}' -> xs.join('')
- ,
- 	newStyleSemAction = spaces outerMatchedBraces:x -> p 'using new style sem action' => x; x
- ,
-  semAction      = newStyleSemAction | oldStyleSemAction
-
+  tsString       = '\'' (~'\'' eChar)*:xs '\''            -> { xs.join('') },
+  expr           = spaces tsString,
+  semAction1     = spaces (~seq('"\\n"') anything)*:xs    -> { xs.join('') },
+  nonBraceChar   = ~'{' ~'}' char,
+  inside         = innerBraces | nonBraceChar,
+  innerBraces    = '{' inside*:xs '}'                     -> { "{#{xs.join('')}}" },
+  outerBraces    = '{' inside*:xs '}'                     -> { xs.join('') },
+  semAction2     = spaces outerBraces,
+  semAction      = semAction2 | semAction1
 }
 
